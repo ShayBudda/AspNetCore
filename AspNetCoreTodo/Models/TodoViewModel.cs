@@ -1,7 +1,7 @@
-namespace AspNetCoreTodo.Models
+namespace AspNetCoreTodo.Models;
+
+public class TodoViewModel
 {
-    public class TodoViewModel
-    {
-        public List<TodoItem> Items { get; set; }
-    }
+    // view model should be a separate class that holds an array
+    public TodoItem[] Items { get; set; }
 }

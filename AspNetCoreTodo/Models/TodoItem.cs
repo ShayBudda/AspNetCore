@@ -1,16 +1,18 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace AspNetCoreTodo.Models
+namespace AspNetCoreTodo.Models;
+
+public class TodoItem
 {
-    public class TodoItem
-        {
-            public Guid Id { get; set; }
-            public bool IsDone { get; set; }
+    // Globally unique identifier
+    public Guid Id { get; set; }
 
-            [Required]
-            public string Title {get; set;} = string.Empty;
+    // Boolean (true/false value)
+    public bool IsDone { get; set; }
 
-            public DateTimeOffset? DueAt { get; set; }
-        }
+    // String (text value)
+    [Required]
+    public string Title { get; set; }
+
+    public DateTimeOffset? DueAt { get; set; }
 }
