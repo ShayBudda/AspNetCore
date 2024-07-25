@@ -4,6 +4,8 @@ namespace AspNetCoreTodo.Models;
 
 public class TodoItem
 {
+    // Add User ID
+    
     // Globally unique identifier
     public Guid Id { get; set; }
 
@@ -14,5 +16,6 @@ public class TodoItem
     [Required]
     public string Title { get; set; }
 
-    public DateTimeOffset? DueAt { get; set; }
+    [Required]
+    public DateTimeOffset? DueAt { get; set; } = DateTimeOffset.Now.AddDays(3);
 }
