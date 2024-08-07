@@ -1,50 +1,63 @@
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AspNetCoreTodo.Data;
 using AspNetCoreTodo.Models;
-using AspNetCoreTodo.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
-public class TodoItemService : ITodoItemService
+namespace AspNetCoreTodo.Services
 {
-    private readonly ApplicationDbContext _context;
+	public class TodoItemService : ITodoItemService
+	{
+		private readonly ApplicationDbContext _context;
 
-    public TodoItemService(ApplicationDbContext context)
-    {
-        _context = context;
-    }
+		public TodoItemService(ApplicationDbContext context)
+		{
+			_context = context;
+		}
 
-    public async Task<bool> AddItemAsync(TodoItem newItem)
-    {
-        newItem.Id = Guid.NewGuid();
-        newItem.IsDone = false;
-        newItem.DueAt = DateTimeOffset.Now.AddDays(5);
+		// P. 81
+		public async Task<TodoItem[]> GetIncompleteItemsAsync(IdentityUser user)
+		{
+			return await _context.Items
+				.Where(x => x.IsDone == false && x.UserId == user.Id)
+				.ToArrayAsync();
+		}	// P. 82
 
-        _context.Items.Add(newItem);
-        
-        var saveResult = await _context.SaveChangesAsync();
-        return saveResult == 1;
-    }
+		public async Task<bool> AddItemAsync(TodoItem newItem, IdentityUser user)
+		{
+			newItem.Id = Guid.NewGuid();
+			newItem.IsDone = false;
 
-    public async Task<TodoItem[]> GetIncompleteItemsAsync(IdentityUser CurrentUser)
-    {
-        return await _context.Items
-            .Where(x => x.IsDone == false)
-            .ToArrayAsync();
-    }
+			newItem.UserId = user.Id;	// P. 84
 
-    public async Task<bool> MarkDoneAsync(Guid id)
-    {
-        var item = await _context.Items
-            .Where(x => x.Id == id)
-            .SingleOrDefaultAsync();
+			// Ensure DueAt is properly assigned from user input
+			if (newItem.DueAt == default)
+			{
+				// Optionally handle cases where DueAt might be missing
+				// For example, set a default value if not provided
+				newItem.DueAt = DateTimeOffset.Now.AddDays(3); // Optional default if DueAt is not provided
+			}
 
-        if (item == null) return false;
+			_context.Items.Add(newItem);
 
-        item.IsDone = true;
+			var saveResult = await _context.SaveChangesAsync();
+			return saveResult == 1;
+		}   // P. 67
 
-        var saveResult = await _context.SaveChangesAsync();
-        return saveResult == 1; // One entity should have been updated
-    }
+		public async Task<bool> MarkDoneAsync(Guid id, IdentityUser user)
+		{
+			var item = await _context.Items
+				.Where(x => x.Id == id && x.UserId == user.Id)	// P.84
+				.SingleOrDefaultAsync();
+
+			if (item == null) return false;
+
+			item.IsDone = true;
+
+			var saveResult = await _context.SaveChangesAsync();
+			return saveResult == 1; // One entity should have been updated
+		}	// P. 73
+	}
 }

@@ -1,80 +1,88 @@
-using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using AspNetCoreTodo.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using AspNetCoreTodo.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
-namespace AspNetCoreTodo.Controllers.Mvc;
-
-[Authorize]
-public class TodoController : Controller
+namespace AspNetCoreTodo.Controllers
 {
-    private readonly ITodoItemService _todoItemService;
-    private readonly UserManager<IdentityUser> _userManager;
-
-    // Constructor injection: ITodoItemService is injected into the controller
-    public TodoController(ITodoItemService todoItemService, UserManager<IdentityUser> userManager)
+	// P. 77. Add "Authorize"; using Microsoft.AspNetCore.Authorization;
+	[Authorize]
+	public class TodoController : Controller
     {
-        _todoItemService = todoItemService;
-        _userManager = userManager;
-    }
+		private readonly ITodoItemService _todoItemService;
+		private readonly UserManager<IdentityUser> _userManager;
 
-    public async Task<IActionResult> Index()
-    {
-        var currentUser = await _userManager.GetUserAsync(User);
-        if (currentUser == null)
-        {
-            return Challenge();
-        }
+		public TodoController(ITodoItemService todoItemService, UserManager<IdentityUser> userManager)
+		{
+			_todoItemService = todoItemService;
+			_userManager = userManager;
+		}   // P. 36; 79, using Microsoft.AspNetCore.Identity;
 
-        // Call service to get incomplete to-do items asynchronously
-        var items = await _todoItemService.GetIncompleteItemsAsync(currentUser);
-        // Get to-do items from database
+		// P. 38 update
+		public async Task<IActionResult> Index()
+		{
+			// P. 80
+			var currentUser = await _userManager.GetUserAsync(User);
+			if (currentUser == null) return Challenge();
 
-        // Put items into a model
-        // Prepare view model to pass data to the view
-        var model = new TodoViewModel
-        {
-            Items = items // Initialize list of to-do items
-        };
+			// Get to-do items from database p. 37; add currentUser
+			var items = await _todoItemService.GetIncompleteItemsAsync(currentUser);
 
-        // Render view using the model, passing the populated view model to the view
-        return View(model);
-    }
+			// Put items into a model
+			var model = new TodoViewModel()
+			{
+				Items = items
+			};
 
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddItem(TodoItem newItem)
-    {
-        if (!ModelState.IsValid)
-        {
-            return RedirectToAction("Index");
-        }
+			// Render view using the model
+			return View(model);	// P. 41
+		}   // P.22-23
 
-        var successful = await _todoItemService.AddItemAsync(newItem);
-        if (!successful)
-        {
-            return BadRequest(new { error = "Could not add item." });
-        }
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> AddItem(TodoItem newItem)
+		{
+			if (!ModelState.IsValid)
+			{
+				return RedirectToAction("Index");
+			}
 
-        return RedirectToAction("Index");
-    }
+			var currentUser = await _userManager.GetUserAsync(User);	// P. 83
+			if (currentUser == null) return Challenge();
 
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MarkDone(Guid id)
-    {
-        if (id == Guid.Empty)
-        {
-            return RedirectToAction("Index");
-        }
+			var successful = await _todoItemService.AddItemAsync(newItem, currentUser);
 
-        var successful = await _todoItemService.MarkDoneAsync(id);
-        if (!successful)
-        {
-            return BadRequest("Could not add item.");
-        }
-        
-        return RedirectToAction("Index");
-    }
+			if (!successful)
+			{
+				return BadRequest("Could not add item.");
+			}
+
+			return RedirectToAction("Index");
+		}   // P. 64
+
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> MarkDone(Guid id)
+		{
+			if (id == Guid.Empty)
+			{
+				return RedirectToAction("Index");
+			}
+
+			var currentUser = await _userManager.GetUserAsync(User);	// P. 83
+			if (currentUser == null) return Challenge();
+
+			var successful = await _todoItemService.MarkDoneAsync(id, currentUser);
+
+			if (!successful)
+			{
+				return BadRequest("Could not mark item as done.");
+			}
+
+			return RedirectToAction("Index");
+		}	// P. 71
+	}
 }

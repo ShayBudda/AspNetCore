@@ -12,9 +12,12 @@ public class TodoItem
     // Boolean (true/false value)
     public bool IsDone { get; set; }
 
+    [Required]
+    public string? UserId { get; set; }
+
     // String (text value)
     [Required]
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     [Required]
     public DateTimeOffset? DueAt { get; set; } = DateTimeOffset.Now.AddDays(3);
